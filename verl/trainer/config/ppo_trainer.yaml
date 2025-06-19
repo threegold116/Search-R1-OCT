@@ -36,6 +36,11 @@ actor_rollout_ref:
     use_kl_loss: False # True for GRPO
     kl_loss_coef: 0.001 # for grpo
     kl_loss_type: low_var_kl # for grpo
+    #THREEGOLDCHANGE
+    use_oct_cofficient: False # True for OCT
+    oct_coef: 1 # for OCT(alpha)
+    oct_smooth: 4
+    #THREEGOLDCHANGE
     ppo_epochs: 1
     shuffle: False
     ulysses_sequence_parallel_size: 1 # sp size
@@ -155,6 +160,9 @@ algorithm:
   adv_estimator: gae
   no_think_rl: False
   kl_penalty: kl  # how to estimate kl divergence
+  #THREEGOLDCHANGE
+  oct_penalty: times  # how to estimate oct divergence
+  #THREEGOLDCHANGE
   kl_ctrl:
     type: fixed
     kl_coef: 0.001

@@ -543,6 +543,17 @@ class DataProto:
         indices_np = indices.detach().numpy()
         self.batch = self.batch[indices]
         self.non_tensor_batch = {key: val[indices_np] for key, val in self.non_tensor_batch.items()}
+        #THREEGOLD CHANGE:只对len()==indices.shape[0]的meta_info进行reorder
+        new_meta_info = {}
+        for key, val in self.meta_info.items():
+            if not isinstance(val,list):
+                new_meta_info[key] = val
+            elif len(val)==indices.shape[0]:
+                new_meta_info[key] = (np.array(val))[indices_np].tolist()
+            else:
+                new_meta_info[key] = val
+        self.meta_info = new_meta_info
+        # THREEGOLDCHANGE
 
     def repeat(self, repeat_times=2, interleave=True):
         """

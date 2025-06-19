@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     data_source = 'nq'
 
-    dataset = datasets.load_dataset('RUC-NLPIR/FlashRAG_datasets', 'nq')
+    dataset = datasets.load_dataset('/share/home/sxjiang/dataset/rag/FlashRAG_datasets', 'nq')
 
     train_dataset = dataset['train']
     test_dataset = dataset['test']

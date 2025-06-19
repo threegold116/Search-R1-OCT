@@ -41,7 +41,24 @@ class AdaptiveKLController:
         proportional_error = np.clip(current_kl / target - 1, -0.2, 0.2)
         mult = 1 + proportional_error * n_steps / self.horizon
         self.value *= mult
+# THREEGOLDCHANGE
+class OctController:
+    """
+    Oct controller described in the paper:
+    https://arxiv.org/pdf/2504.14870
+    """
 
+    def __init__(self, init_cofficient, init_smooth,tokenizer):
+        self.cofficient = init_cofficient
+        self.smooth = init_smooth
+        self.tokenizer = tokenizer
+        # self.horizon = horizon
+
+    # def update(self, current_cot, n_steps):
+    #     target = self.target
+    #     proportional_error = np.clip(current_cot / target - 1, -0.2, 0.2)
+    #     mult = 1 + proportional_error * n_steps / self.horizon
+    #     self.value *= mult
 
 class FixedKLController:
     """Fixed KL controller."""
@@ -272,3 +289,91 @@ def kl_penalty(logprob: torch.FloatTensor, ref_logprob: torch.FloatTensor, kl_pe
         raise NotImplementedError
 
     raise NotImplementedError
+def get_calling_times(solution_str):
+    import re
+    def extract_search(solution_str):
+        answer_pattern = r'<search>(.*?)</search>'
+        match = re.finditer(answer_pattern, solution_str, re.DOTALL)
+        matches = list(match)
+        if len(matches) <= 1:
+            return []
+        return len(matches)-1
+    def extract_observations(solution_str):
+        answer_pattern = r'<information>(.*?)</information>'
+        match = re.finditer(answer_pattern, solution_str, re.DOTALL)
+        matches = list(match)
+        if len(matches) <= 1:
+            return []
+        return len(matches)-1
+    # 暂时这么实现
+    search_matches = extract_search(solution_str=solution_str)
+    information_matches = extract_observations(solution_str=solution_str)
+    if len(information_matches)!=0:
+        print(1)
+        pass
+    assert len(search_matches) >= len(information_matches)
+    return len(information_matches)
+
+def oct_penalty(data: DataProto,tokenizer,oct_smooth):
+    # 1.get_strings
+    calling_times = []
+    metainfo = data.meta_info.get("valid_search_stats",None)
+    for i in range(len(data)):
+        if metainfo is not None:
+            calling_times.append(metainfo[i])
+        else:
+            data_item = data[i]  # DataProtoItem
+
+            prompt_ids = data_item.batch['prompts']
+
+            prompt_length = prompt_ids.shape[-1]
+
+            valid_prompt_length = data_item.batch['attention_mask'][:prompt_length].sum()
+            valid_prompt_ids = prompt_ids[-valid_prompt_length:]
+
+            response_ids = data_item.batch['responses']
+            valid_response_length = data_item.batch['attention_mask'][prompt_length:].sum()
+            valid_response_ids = response_ids[:valid_response_length]
+
+            # decode
+            sequences = torch.cat((valid_prompt_ids, valid_response_ids))
+            sequences_str = tokenizer.decode(sequences)
+
+            calling_times.append(get_calling_times(sequences_str))
+
+    # 2.group_by_index
+    index = data.non_tensor_batch['uid']
+    id2calling_times = defaultdict(list)
+    id2min_calling_times = {}
+    oct_scores = torch.zeros((data.batch.batch_size[0]), dtype=torch.float32)
+    calling_times_sum = 0
+    with torch.no_grad():
+        bsz = data.batch.batch_size[0]
+        for i in range(bsz):
+            calling_times_sum += calling_times[i]
+            id2calling_times[index[i]].append(calling_times[i])
+        for idx in id2calling_times:
+            if len(id2calling_times[idx]) == 1:
+                id2min_calling_times[idx] = id2calling_times[idx][0]
+            elif len(id2calling_times[idx]) > 1:
+                id2min_calling_times[idx] = min(id2calling_times[idx])
+            else:
+                raise ValueError(f"no calling times in prompt index: {idx}")
+        def map_to_2n(calling_time,optim_time):# 3.map calling_time to 2*optim_time
+            if calling_time == 0 and optim_time == 0:
+                return 0
+            elif optim_time== 0:
+                return calling_time
+            else:
+                return 2*optim_time*calling_time/(optim_time+calling_time)
+        for i in range(bsz): # 4. compute oct_scores
+            optim_time = id2min_calling_times[index[i]]
+            calling_time = calling_times[i]
+            map_times = map_to_2n(calling_time=calling_time,optim_time=optim_time)
+            if map_times==0 and optim_time==0:
+                oct_scores[i] = torch.tensor(1.0)
+            elif optim_time==0:
+                oct_scores[i] = torch.cos(torch.tensor(map_times*torch.pi/(2*calling_time+oct_smooth)))
+            else:
+                oct_scores[i] = torch.sin(torch.tensor(map_times*torch.pi/(2*optim_time)))
+    return oct_scores, calling_times_sum/bsz

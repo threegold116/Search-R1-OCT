@@ -105,6 +105,7 @@ import hydra
 def main(config):
     if not ray.is_initialized():
         # this is for local ray cluster
+        # ray.init(address="local",runtime_env={'env_vars': {'TOKENIZERS_PARALLELISM': 'true', 'NCCL_DEBUG': 'WARN','RAY_DEBUG_POST_MORTEM': '1'}})
         ray.init(runtime_env={'env_vars': {'TOKENIZERS_PARALLELISM': 'true', 'NCCL_DEBUG': 'WARN'}})
 
     ray.get(main_task.remote(config))

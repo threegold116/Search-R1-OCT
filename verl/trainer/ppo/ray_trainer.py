@@ -118,7 +118,16 @@ def apply_kl_penalty(data: DataProto, kl_ctrl: core_algos.AdaptiveKLController, 
     metrics = {'critic/kl': current_kl, 'critic/kl_coeff': beta}
 
     return data, metrics
-
+#THREEGOLDCHANGE:计算oct奖励
+def apply_oct_penalty(data: DataProto, oct_ctrl: core_algos.OctController, oct_penalty='oct'):
+    token_level_scores = data.batch['token_level_scores']
+    # compute the oct reward cofficent
+    old,avg_call_times = core_algos.oct_penalty(data,tokenizer=oct_ctrl.tokenizer,oct_smooth=oct_ctrl.smooth)  # (batch_size, response_length)
+    print(f"old: {old}")
+    oct_token_level_scores = token_level_scores * old.unsqueeze(-1) *oct_ctrl.cofficient #(bz,response_length)*(bz,1) for last-token score
+    data.batch['token_level_scores'] = oct_token_level_scores
+    metrics = {'actor/avg_call_times': avg_call_times,"actor/oct_coff":oct_ctrl.cofficient,"actor/oct":torch.mean(oct_token_level_scores).item()}
+    return data, metrics
 
 def compute_advantage(data: DataProto, adv_estimator, gamma=1.0, lam=1.0, num_repeat=1):
     # prepare response group
@@ -358,7 +367,13 @@ class RayPPOTrainer(object):
                 raise NotImplementedError
         else:
             self.kl_ctrl = core_algos.FixedKLController(kl_coef=0.)
-
+        #THREEGOLDCHANGE
+        #define oct control
+        if self.config.actor_rollout_ref.actor.use_oct_cofficient:
+            self.oct_ctrl = core_algos.OctController(init_cofficient=config.actor_rollout_ref.actor.oct_coef,
+                                                    init_smooth=config.actor_rollout_ref.actor.oct_smooth,
+                                                    tokenizer=self.tokenizer)
+        #THREEGOLDCHANGE
         self._create_dataloader()
         self._init_logger()
     
@@ -788,6 +803,17 @@ class RayPPOTrainer(object):
                         reward_tensor = self.reward_fn(batch)
                         batch.batch['token_level_scores'] = reward_tensor
 
+                        # THREEGOLDCHANGE
+                        # apply oct_penalty if availale:
+                        if self.config.actor_rollout_ref.actor.use_oct_cofficient:
+                            batch, oct_metrics = apply_oct_penalty(batch,
+                                                                 oct_ctrl=self.oct_ctrl,
+                                                                 oct_penalty=self.config.algorithm.oct_penalty)
+                            metrics.update(oct_metrics)
+                        else:
+                            batch.batch['token_level_scores'] = batch.batch['token_level_scores']
+                        # THREEGOLDCHANGE
+                        
                         # compute rewards. apply_kl_penalty if available
                         if not self.config.actor_rollout_ref.actor.use_kl_loss:
                             batch, kl_metrics = apply_kl_penalty(batch,

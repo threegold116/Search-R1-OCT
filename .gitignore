@@ -7,7 +7,6 @@
 **/*.tar.gz
 **/playground
 **/wandb
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -20,7 +19,8 @@ tensorflow/my_graph/*
 data
 sft/output/*
 sft/data/*
-
+re.md
+train_grpo.sh
 # Distribution / packaging
 .Python
 build/
