@@ -336,6 +336,9 @@ class RayPPOTrainer(object):
                  val_reward_fn=None):
 
         # assert torch.cuda.is_available(), 'cuda must be available on driver'
+        #debug
+        #debug
+        #debug
 
         self.tokenizer = tokenizer
         self.config = config
@@ -373,7 +376,10 @@ class RayPPOTrainer(object):
             self.oct_ctrl = core_algos.OctController(init_cofficient=config.actor_rollout_ref.actor.oct_coef,
                                                     init_smooth=config.actor_rollout_ref.actor.oct_smooth,
                                                     tokenizer=self.tokenizer)
-        #THREEGOLDCHANGE
+        #THREEGOLDCHANGE:this is oct init
+        #debug
+        #debug
+        #debug
         self._create_dataloader()
         self._init_logger()
     

@@ -21,7 +21,7 @@ from verl.utils.reward_score import qa_em
 from verl.trainer.ppo.ray_trainer import RayPPOTrainer
 import re
 import numpy as np
-
+import os
 def _select_rm_score_fn(data_source):
     if data_source in ['nq', 'triviaqa', 'popqa', 'hotpotqa', '2wikimultihopqa', 'musique', 'bamboogle']:
         return qa_em.compute_score_em
@@ -85,7 +85,7 @@ class RewardManager():
 
             if already_print_data_sources[data_source] < self.num_examine:
                 already_print_data_sources[data_source] += 1
-                print(sequences_str)
+                # print(sequences_str)
         
         # print(f"[DEBUG] all_scores: {all_scores}")
         # print(f"[DEBUG] all_scores shape: {np.array(all_scores).shape}")
@@ -105,9 +105,12 @@ import hydra
 def main(config):
     if not ray.is_initialized():
         # this is for local ray cluster
-        # ray.init(address="local",runtime_env={'env_vars': {'TOKENIZERS_PARALLELISM': 'true', 'NCCL_DEBUG': 'WARN','RAY_DEBUG_POST_MORTEM': '1'}})
-        ray.init(runtime_env={'env_vars': {'TOKENIZERS_PARALLELISM': 'true', 'NCCL_DEBUG': 'WARN'}})
-
+        info=ray.init(address="local",runtime_env={'env_vars': {'TOKENIZERS_PARALLELISM': 'true', 'NCCL_DEBUG': 'WARN','RAY_DEBUG_POST_MORTEM': '1',"RAY_DEBUG":"1"}})
+        print(info)
+        print(__file__)
+        # ray.init(runtime_env={'env_vars': {'TOKENIZERS_PARALLELISM': 'true', 'NCCL_DEBUG': 'WARN'}})
+    else:
+        print("ray already initialized")
     ray.get(main_task.remote(config))
 
 
@@ -115,13 +118,13 @@ def main(config):
 def main_task(config):
     from verl.utils.fs import copy_local_path_from_hdfs
     from transformers import AutoTokenizer
-
     # print initial config
     from pprint import pprint
     from omegaconf import OmegaConf
     pprint(OmegaConf.to_container(config, resolve=True))  # resolve=True will eval symbol values
     OmegaConf.resolve(config)
-
+    if os.environ.get('RAY_DEBUG_MODE') == '1':
+        breakpoint()
     # env_class = ENV_CLASS_MAPPING[config.env.name]
 
     # download the checkpoint from hdfs
@@ -185,7 +188,8 @@ def main_task(config):
 
     # Note that we always use function-based RM for validation
     val_reward_fn = RewardManager(tokenizer=tokenizer, num_examine=1)
-
+    if os.environ.get('RAY_DEBUG_MODE') == '1':
+        breakpoint()
     resource_pool_manager = ResourcePoolManager(resource_pool_spec=resource_pool_spec, mapping=mapping)
     trainer = RayPPOTrainer(config=config,
                             tokenizer=tokenizer,

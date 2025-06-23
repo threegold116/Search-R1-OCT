@@ -25,7 +25,7 @@ import argparse
 
 def make_prefix(dp, template_type):
     question = dp['question']
-
+    # THREEGOLDCHANGE
     # NOTE: also need to change reward_score/countdown.py
     if template_type == 'base':
         """This works for any base model"""
@@ -33,6 +33,7 @@ def make_prefix(dp, template_type):
 You must conduct reasoning inside <think> and </think> first every time you get new information. \
 After reasoning, if you find you lack some knowledge, you can call a search engine by <search> query </search> and it will return the top searched results between <information> and </information>. \
 You can search as many times as your want. \
+You need to make every search call count and gain helpful results. \
 If you find no further external knowledge needed, you can directly provide the answer inside <answer> and </answer>, without detailed illustrations. For example, <answer> Beijing </answer>. Question: {question}\n"""
     else:
         raise NotImplementedError
@@ -49,7 +50,7 @@ if __name__ == '__main__':
 
     data_source = 'nq'
 
-    dataset = datasets.load_dataset('/share/home/sxjiang/dataset/rag/FlashRAG_datasets', 'nq')
+    dataset = datasets.load_dataset('/home/sxjiang/dataset/FlashRAG_datasets', 'nq')
 
     train_dataset = dataset['train']
     test_dataset = dataset['test']
