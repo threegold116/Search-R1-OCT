@@ -672,7 +672,8 @@ class RayPPOTrainer(object):
         The driver process only need to call the compute functions of the worker group through RPC to construct the PPO dataflow.
         The light-weight advantage computation is done on the driver process.
         """
-
+        if os.environ.get('RAY_DEBUG_MODE') == '1':
+            breakpoint()
         logger = self.logger
         self.global_steps = 0
         # perform validation before training
@@ -686,7 +687,7 @@ class RayPPOTrainer(object):
 
         # we start from step 1
         self.global_steps += 1
-
+        
         # Agent config preparation
         gen_config = GenerationConfig(
             max_turns=self.config.max_turns,
@@ -738,7 +739,7 @@ class RayPPOTrainer(object):
                 # with _timer('step', timing_raw):
                     else:
                         first_input_ids = gen_batch.batch['input_ids'][:, -gen_config.max_start_length:].clone().long()
-
+                        
                         with _timer('gen', timing_raw):
                             generation_manager.timing_raw = timing_raw
                             final_gen_batch_output = generation_manager.run_llm_loop(

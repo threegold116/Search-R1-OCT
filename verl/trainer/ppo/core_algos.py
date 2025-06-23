@@ -314,7 +314,7 @@ def get_calling_times(solution_str):
     assert len(search_matches) >= len(information_matches)
     return len(information_matches)
 
-def oct_penalty(data: DataProto,tokenizer,oct_smooth):
+def oct_penalty(data,tokenizer,oct_smooth):
     # 1.get_strings
     calling_times = []
     metainfo = data.meta_info.get("valid_search_stats",None)
