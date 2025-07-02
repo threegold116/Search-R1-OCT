@@ -22,6 +22,9 @@ sft/output/*
 sft/data/*
 re.md
 train_grpo.sh
+evaluate.sh
+postprocess_predictions
+tempCodeRunnerFile.py
 # Distribution / packaging
 .Python
 build/
@@ -72,7 +75,8 @@ local_settings.py
 image_outputs
 
 checkpoints
-
+verl_checkpoints/*
+transfer_checkpoints/*
 # Flask stuff:
 instance/
 .webassets-cache

@@ -203,7 +203,11 @@ class DataParallelPPOActor(BasePPOActor):
     def update_policy(self, data: DataProto):
         # make sure we are in training mode
         self.actor_module.train()
-
+        # THREEGOLD CHANGE
+        import os
+        if os.environ.get("RAY_DEBUG_MODE","0") == "1":
+            breakpoint()
+        # THREEGOLD CHANGE
         assert self.config.ppo_mini_batch_size % self.config.ppo_micro_batch_size == 0
         self.gradient_accumulation = self.config.ppo_mini_batch_size // self.config.ppo_micro_batch_size
         temperature = data.meta_info['temperature']  # temperature must be in the data.meta_info to avoid slient error

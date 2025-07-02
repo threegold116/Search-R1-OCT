@@ -1,8 +1,8 @@
 data_name=nq_hotpotqa_train
 export WANDB_MODE=offline
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 export RAY_DEBUG_MODE=0
-export DATA_DIR='/share/home/sxjiang/myproject/Search-R1-OCT/scripts/data_process/data/nq_search'
+export DATA_DIR='/share/home/sxjiang/myproject/Search-R1-OCT/scripts/data_process/data/nq_search-oct'
 
 WAND_PROJECT="Search-R1-OCT"
 
@@ -51,7 +51,7 @@ PYTHONUNBUFFERED=1 python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.actor.use_kl_loss=true \
     actor_rollout_ref.actor.use_oct_cofficient=true \
     actor_rollout_ref.actor.ppo_mini_batch_size=256 \
-    actor_rollout_ref.actor.ppo_micro_batch_size=64 \
+    actor_rollout_ref.actor.ppo_micro_batch_size=128 \
     actor_rollout_ref.actor.fsdp_config.param_offload=true \
     actor_rollout_ref.actor.fsdp_config.grad_offload=true \
     actor_rollout_ref.actor.fsdp_config.optimizer_offload=true \

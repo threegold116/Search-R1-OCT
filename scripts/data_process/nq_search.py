@@ -33,16 +33,20 @@ def make_prefix(dp, template_type):
 You must conduct reasoning inside <think> and </think> first every time you get new information. \
 After reasoning, if you find you lack some knowledge, you can call a search engine by <search> query </search> and it will return the top searched results between <information> and </information>. \
 You can search as many times as your want. \
+If you find no further external knowledge needed, you can directly provide the answer inside <answer> and </answer>, without detailed illustrations. For example, <answer> Beijing </answer>. Question: {question}\n"""
+        oct_prefix = f"""Answer the given question. \
+You must conduct reasoning inside <think> and </think> first every time you get new information. \
+After reasoning, if you find you lack some knowledge, you can call a search engine by <search> query </search> and it will return the top searched results between <information> and </information>. \
 You need to make every search call count and gain helpful results. \
 If you find no further external knowledge needed, you can directly provide the answer inside <answer> and </answer>, without detailed illustrations. For example, <answer> Beijing </answer>. Question: {question}\n"""
     else:
         raise NotImplementedError
-    return prefix
+    return oct_prefix
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--local_dir', default='./data/nq_search')
+    parser.add_argument('--local_dir', default='./data/nq_search-oct')
     parser.add_argument('--hdfs_dir', default=None)
     parser.add_argument('--template_type', type=str, default='base')
 
@@ -50,7 +54,7 @@ if __name__ == '__main__':
 
     data_source = 'nq'
 
-    dataset = datasets.load_dataset('/home/sxjiang/dataset/FlashRAG_datasets', 'nq')
+    dataset = datasets.load_dataset('/share/home/sxjiang/dataset/rag/FlashRAG_datasets', 'nq')
 
     train_dataset = dataset['train']
     test_dataset = dataset['test']

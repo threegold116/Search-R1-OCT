@@ -38,7 +38,6 @@ from verl.single_controller.ray import RayResourcePool, RayWorkerGroup, RayClass
 from verl.single_controller.ray.base import create_colocated_worker_cls
 from verl.trainer.ppo import core_algos
 from verl.utils.seqlen_balancing import get_seqlen_balanced_partitions, log_seqlen_unbalance
-
 import re
 from search_r1.llm_agent.generation import LLMGenerationManager, GenerationConfig
 
@@ -654,7 +653,26 @@ class RayPPOTrainer(object):
             critic_remote_path = None if self.config.trainer.default_hdfs_dir is None else os.path.join(
                 self.config.trainer.default_hdfs_dir, 'critic')
             self.critic_wg.save_checkpoint(critic_local_path, critic_remote_path)
+    #THREEGOLD CHANGE:利用v3.0的verl的save_checkpoint函数实现resume training
+    def _save_checkpoint_new(self):
+         # path: given_path + `/global_step_{global_steps}` + `/actor`
+        local_global_step_folder = os.path.join(self.config.trainer.default_local_dir, f"global_step_{self.global_steps}")
 
+        print(f"local_global_step_folder: {local_global_step_folder}")
+        actor_local_path = os.path.join(local_global_step_folder, "actor")
+        actor_remote_path = None if self.config.trainer.default_hdfs_dir is None else os.path.join(
+            self.config.trainer.default_hdfs_dir, f"global_step_{self.global_steps}", "actor")
+        max_actor_ckpt_to_keep = self.config.trainer.get("max_actor_ckpt_to_keep", None) if not remove_previous_ckpt_in_save else 1
+        max_critic_ckpt_to_keep = self.config.trainer.get("max_critic_ckpt_to_keep", None) if not remove_previous_ckpt_in_save else 1
+        
+        self.actor_rollout_wg.save_checkpoint(actor_local_path, actor_remote_path, self.global_steps, max_ckpt_to_keep=max_actor_ckpt_to_keep)
+
+        if self.use_critic:
+            critic_local_path = os.path.join(self.config.trainer.default_local_dir, 'critic',
+                                             f'global_step_{self.global_steps}')
+            critic_remote_path = None if self.config.trainer.default_hdfs_dir is None else os.path.join(
+                self.config.trainer.default_hdfs_dir, 'critic')
+            self.critic_wg.save_checkpoint(critic_local_path, critic_remote_path)
     def _balance_batch(self, batch: DataProto, metrics, logging_prefix='global_seqlen'):
         """Reorder the data on single controller such that each dp rank gets similar total tokens"""
         attention_mask = batch.batch['attention_mask']
@@ -758,7 +776,9 @@ class RayPPOTrainer(object):
                             final_gen_batch_output.batch[key] = final_gen_batch_output.batch[key].long()
 
                         with torch.no_grad():
-                            output = self.actor_rollout_wg.compute_log_prob(final_gen_batch_output)
+                            # THREEGOLD CHANGE
+                            with _timer('old', timing_raw):
+                                output = self.actor_rollout_wg.compute_log_prob(final_gen_batch_output)
                             final_gen_batch_output = final_gen_batch_output.union(output)
 
                         # batch.non_tensor_batch['uid'] = np.array([str(uuid.uuid4()) for _ in range(len(batch.batch))],
@@ -873,6 +893,12 @@ class RayPPOTrainer(object):
                 # TODO: make a canonical logger that supports various backend
                 logger.log(data=metrics, step=self.global_steps)
 
+                # THREEGOLD CHANGE
+                print(f"step {self.global_steps} timing_raw:")
+                for key,value in timing_raw.items():
+                    print(f'{key}: {value}')
+                # THREEGOLD CHANGE
+                
                 self.global_steps += 1
 
                 if self.global_steps >= self.total_training_steps:

@@ -34,17 +34,37 @@ You must conduct reasoning inside <think> and </think> first every time you get 
 After reasoning, if you find you lack some knowledge, you can call a search engine by <search> query </search> and it will return the top searched results between <information> and </information>. \
 You can search as many times as your want. \
 If you find no further external knowledge needed, you can directly provide the answer inside <answer> and </answer>, without detailed illustrations. For example, <answer> Beijing </answer>. Question: {question}\n"""
+        oct_prefix = f"""Answer the given question. \
+You must conduct reasoning inside <think> and </think> first every time you get new information. \
+After reasoning, if you find you lack some knowledge, you can call a search engine by <search> query </search> and it will return the top searched results between <information> and </information>. \
+You need to make every search call count and gain helpful results. \
+If you find no further external knowledge needed, you can directly provide the answer inside <answer> and </answer>, without detailed illustrations. For example, <answer> Beijing </answer>. Question: {question}\n"""
+        merf_oct_prefix = f"""Answer the given question. \
+You must conduct reasoning inside <think> and </think> first every time you get new information. \
+After reasoning, if you find you lack some knowledge, you can call a search engine by <search> query </search> and it will return the top searched results between <information> and </information>. \
+You need to make every search call count and gain helpful results. \
+If you find no further external knowledge needed, you can directly provide the answer inside <answer> and </answer>, without detailed illustrations. For example, <answer> Beijing </answer>. 
+You will get evaluated following Evaluation Scoring Rules: 
+- Correctness Score: 
+- If your final answer is correct, score 1 
+- If your answer is wrong, score 0 
+- Calling Efficiency Score: 
+- The fewer times you call the search engine, the higher the score will be. The score range is 0 to 1. 
+- Total Evaluation Score: 
+- The final score is the product of the correctness score and the call efficiency score. Example: (1) The final answer is correct: 1 (2) The calling efficiency score is 0.5: 0.5 (3) Total evaluation score: 0.5.\
+Think carefully, follow the structure, and consider the evaluation rules.
+Question: {question}\n"""
     else:
         raise NotImplementedError
-    return prefix
+    return merf_oct_prefix
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--local_dir', default='./data/nq_search')
+    parser.add_argument('--local_dir', default='/share/home/sxjiang/myproject/Search-R1-OCT/scripts/data_process/data/nq_search-oct-merf')
     parser.add_argument('--hdfs_dir', default=None)
     parser.add_argument('--template_type', type=str, default='base')
-    parser.add_argument('--data_sources', default='nq')
+    parser.add_argument('--data_sources', default='nq,hotpotqa')
 
     args = parser.parse_args()
 
@@ -54,7 +74,7 @@ if __name__ == '__main__':
 
     for data_source in data_sources:
 
-        dataset = datasets.load_dataset('RUC-NLPIR/FlashRAG_datasets', data_source)
+        dataset = datasets.load_dataset('/share/home/sxjiang/dataset/rag/FlashRAG_datasets', data_source)
 
         train_dataset = dataset['train']
 

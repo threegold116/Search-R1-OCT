@@ -56,7 +56,6 @@ class ActorRolloutRefWorker(Worker):
         import torch.distributed
         if not torch.distributed.is_initialized():
             torch.distributed.init_process_group(backend="nccl")
-
         # build device mesh for FSDP
         world_size = torch.distributed.get_world_size()
         from torch.distributed.device_mesh import init_device_mesh
@@ -121,7 +120,6 @@ class ActorRolloutRefWorker(Worker):
         from transformers import AutoModelForCausalLM, AutoConfig
         from torch.distributed.fsdp import FullyShardedDataParallel as FSDP, ShardingStrategy, MixedPrecision
         from torch import optim
-
         log_gpu_memory_usage('Before init from HF AutoModel', logger=logger)
         local_path = copy_local_path_from_hdfs(model_path)
 
@@ -172,7 +170,6 @@ class ActorRolloutRefWorker(Worker):
             if enable_gradient_checkpointing:
                 actor_module.gradient_checkpointing_enable(gradient_checkpointing_kwargs={'use_reentrant': False})
         torch.distributed.barrier()
-
         if self.rank == 0:
             print_model_size(actor_module)
 
@@ -533,8 +530,7 @@ class ActorRolloutRefWorker(Worker):
         torch.distributed.barrier()
         if self._is_offload_param:
             offload_fsdp_param_and_grad(module=self.actor_module_fsdp, offload_grad=self._is_offload_grad)
-
-
+    # THREEGOLD CHANGE:利用v3.0的verl的save_checkpoint函数实现resume training
 class CriticWorker(Worker):
 
     def __init__(self, config):
