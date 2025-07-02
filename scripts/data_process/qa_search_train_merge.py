@@ -41,10 +41,10 @@ If you find no further external knowledge needed, you can directly provide the a
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--local_dir', default='./data/nq_search')
+    parser.add_argument('--local_dir', default='/home/sxjiang/myproject/agent/Search-R1-OCT/scripts/data_process/data/nq_search-origin')
     parser.add_argument('--hdfs_dir', default=None)
     parser.add_argument('--template_type', type=str, default='base')
-    parser.add_argument('--data_sources', default='nq')
+    parser.add_argument('--data_sources', default='nq,hotpotqa')
 
     args = parser.parse_args()
 
@@ -54,7 +54,10 @@ if __name__ == '__main__':
 
     for data_source in data_sources:
 
-        dataset = datasets.load_dataset('RUC-NLPIR/FlashRAG_datasets', data_source)
+        if data_source != 'strategyqa':
+            dataset = datasets.load_dataset('/home/sxjiang/dataset/FlashRAG_datasets', data_source)
+        else:
+            dataset = datasets.load_dataset('json', data_files="/home/peterjin/mnt/data/strategyqa/test_correct.jsonl")
 
         train_dataset = dataset['train']
 
