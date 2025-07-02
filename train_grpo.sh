@@ -2,7 +2,7 @@ data_name=nq_hotpotqa_train
 export WANDB_MODE=offline
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 export RAY_DEBUG_MODE=0
-export DATA_DIR='/share/home/sxjiang/myproject/Search-R1-OCT/scripts/data_process/data/nq_search'
+export DATA_DIR='/share/home/sxjiang/myproject/Search-R1-OCT/scripts/data_process/data/nq_search-oct'
 
 WAND_PROJECT="Search-R1-OCT"
 
@@ -51,7 +51,7 @@ PYTHONUNBUFFERED=1 python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.actor.use_kl_loss=true \
     actor_rollout_ref.actor.use_oct_cofficient=true \
     actor_rollout_ref.actor.ppo_mini_batch_size=256 \
-    actor_rollout_ref.actor.ppo_micro_batch_size=64 \
+    actor_rollout_ref.actor.ppo_micro_batch_size=128 \
     actor_rollout_ref.actor.fsdp_config.param_offload=true \
     actor_rollout_ref.actor.fsdp_config.grad_offload=true \
     actor_rollout_ref.actor.fsdp_config.optimizer_offload=true \
@@ -72,7 +72,7 @@ PYTHONUNBUFFERED=1 python3 -m verl.trainer.main_ppo \
     +trainer.val_only=false \
     +trainer.val_before_train=false \
     trainer.default_hdfs_dir=null \
-    trainer.n_gpus_per_node=8 \
+    trainer.n_gpus_per_node=4 \
     trainer.nnodes=1 \
     trainer.save_freq=100 \
     trainer.test_freq=50 \
@@ -83,7 +83,6 @@ PYTHONUNBUFFERED=1 python3 -m verl.trainer.main_ppo \
     trainer.default_hdfs_dir=null \
     trainer.default_local_dir=verl_checkpoints/$EXPERIMENT_NAME \
     max_turns=4 \
-    oct_reward=false \
     retriever.url="http://127.0.0.1:8000/retrieve" \
     retriever.topk=3 \
     2>&1 | tee $EXPERIMENT_NAME.log

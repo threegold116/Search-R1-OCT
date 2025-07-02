@@ -186,3 +186,4 @@ trainer:
 
 max_turns: 10
 do_search: true
+do_print_flag: false

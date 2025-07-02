@@ -7,7 +7,7 @@ import requests
 question = "Mike Barnett negotiated many contracts including which player that went on to become general manager of CSKA Moscow of the Kontinental Hockey League?"
 
 # Model ID and device setup
-model_id = "PeterJinGo/SearchR1-nq_hotpotqa_train-qwen2.5-7b-em-ppo"
+model_id = "/share/home/sxjiang/myproject/Search-R1-OCT/transfer_checkpoints/SearchR1-nq_hotpotqa_train-qwen2.5-3b-em-grpo-oct-500-140-250702"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 question = question.strip()
@@ -23,6 +23,9 @@ After reasoning, if you find you lack some knowledge, you can call a search engi
 You can search as many times as your want. \
 If you find no further external knowledge needed, you can directly provide the answer inside <answer> and </answer>, without detailed illustrations. For example, <answer> Beijing </answer>. Question: {question}\n"""
 
+oct_prompt = f"""
+
+"""
 # Initialize the tokenizer and model
 tokenizer = transformers.AutoTokenizer.from_pretrained(model_id)
 model = transformers.AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.bfloat16, device_map="auto")

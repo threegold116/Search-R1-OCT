@@ -22,6 +22,7 @@ from verl.trainer.ppo.ray_trainer import RayPPOTrainer
 import re
 import numpy as np
 import os
+import os
 def _select_rm_score_fn(data_source):
     if data_source in ['nq', 'triviaqa', 'popqa', 'hotpotqa', '2wikimultihopqa', 'musique', 'bamboogle']:
         return qa_em.compute_score_em
@@ -33,11 +34,11 @@ class RewardManager():
     """The reward manager.
     """
 
-    def __init__(self, tokenizer, num_examine, format_score=0.) -> None:
+    def __init__(self, tokenizer, num_examine, format_score=0.,do_print_flag=False) -> None:
         self.tokenizer = tokenizer
         self.num_examine = num_examine  # the number of batches of decoded responses to print to the console
         self.format_score = format_score
-
+        self.do_print_flag = do_print_flag
     def __call__(self, data: DataProto):
         """We will expand this function gradually based on the available datasets"""
 
@@ -75,7 +76,7 @@ class RewardManager():
             data_source = data_item.non_tensor_batch['data_source']
             compute_score_fn = _select_rm_score_fn(data_source)
 
-            score = compute_score_fn(solution_str=sequences_str, ground_truth=ground_truth, format_score=self.format_score)
+            score = compute_score_fn(solution_str=sequences_str, ground_truth=ground_truth, format_score=self.format_score,do_print_flag=self.do_print_flag)
 
             reward_tensor[i, valid_response_length - 1] = score
             # all_scores.append(score)
@@ -85,6 +86,7 @@ class RewardManager():
 
             if already_print_data_sources[data_source] < self.num_examine:
                 already_print_data_sources[data_source] += 1
+                # print(sequences_str)
                 # print(sequences_str)
         
         # print(f"[DEBUG] all_scores: {all_scores}")
@@ -184,12 +186,11 @@ def main_task(config):
         role_worker_mapping[Role.RewardModel] = ray.remote(RewardModelWorker)
         mapping[Role.RewardModel] = global_pool_id
 
-    reward_fn = RewardManager(tokenizer=tokenizer, num_examine=0)
+    reward_fn = RewardManager(tokenizer=tokenizer, num_examine=0,do_print_flag=config.do_print_flag)
 
     # Note that we always use function-based RM for validation
-    val_reward_fn = RewardManager(tokenizer=tokenizer, num_examine=1)
-    if os.environ.get('RAY_DEBUG_MODE') == '1':
-        breakpoint()
+    val_reward_fn = RewardManager(tokenizer=tokenizer, num_examine=1,do_print_flag=config.do_print_flag)
+
     resource_pool_manager = ResourcePoolManager(resource_pool_spec=resource_pool_spec, mapping=mapping)
     trainer = RayPPOTrainer(config=config,
                             tokenizer=tokenizer,
@@ -200,6 +201,8 @@ def main_task(config):
                             val_reward_fn=val_reward_fn,
                             )
     trainer.init_workers()
+    if os.environ.get('RAY_DEBUG_MODE') == '1':
+        breakpoint()
     trainer.fit()
 
 
