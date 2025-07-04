@@ -7,7 +7,7 @@ import requests
 question = "Mike Barnett negotiated many contracts including which player that went on to become general manager of CSKA Moscow of the Kontinental Hockey League?"
 
 # Model ID and device setup
-model_id = "/share/home/sxjiang/myproject/Search-R1-OCT/transfer_checkpoints/SearchR1-nq_hotpotqa_train-qwen2.5-3b-em-grpo-oct-500-140-250702"
+model_id = "/share/home/jfliang/Project/sxjiang/Search-R1-OCT/transfer_checkpoints/SearchR1-nq_hotpotqa_train-qwen2.5-3b-em-grpo-oct-merf-300-140-250702"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 question = question.strip()

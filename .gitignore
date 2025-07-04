@@ -23,6 +23,7 @@ sft/data/*
 re.md
 train_grpo.sh
 evaluate.sh
+evaluate2.sh
 postprocess_predictions
 tempCodeRunnerFile.py
 # Distribution / packaging
