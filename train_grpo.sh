@@ -1,13 +1,13 @@
 data_name=nq_hotpotqa_train
 export WANDB_MODE=offline
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-export RAY_DEBUG_MODE=0
-export DATA_DIR='/share/home/sxjiang/myproject/Search-R1-OCT/scripts/data_process/data/nq_search-oct'
+export RAY_DEBUG_MODE=1
+export DATA_DIR='/share/home/sxjiang/myproject/Search-R1-OCT/scripts/data_process/data/nq_search-oct-merf'
 
 WAND_PROJECT="Search-R1-OCT"
 
 export BASE_MODEL='/share/home/sxjiang/model/Qwen2.5-3B'
-export EXPERIMENT_NAME=${data_name}-search-r1-grpo-qwen2.5-3b-em-250619
+export EXPERIMENT_NAME=${data_name}-search-r1-grpo-qwen2.5-3b-em-250619-merf
 # export BASE_MODEL='meta-llama/Llama-3.2-3B-Instruct'
 # export EXPERIMENT_NAME=${data_name}-search-r1-grpo-llama3.2-3b-it-em
 # export BASE_MODEL='meta-llama/Llama-3.1-8B'

@@ -583,6 +583,7 @@ class RayPPOTrainer(object):
         for data_source, rewards in data_source_reward.items():
             metric_dict[f'val/test_score/{data_source}'] = np.mean(rewards)
         for data_source, calling_times in data_source_calling_times.items():
+            rewards = data_source_reward[data_source]
             metric_dict[f'val/calling_times/{data_source}'] = np.mean(calling_times)
             metric_dict[f'val/calling_times_productivity/{data_source}'] = np.sum(rewards)/np.sum(calling_times)
         return metric_dict
