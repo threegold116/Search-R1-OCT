@@ -2,12 +2,12 @@ data_name=nq_hotpotqa_train
 export WANDB_MODE=offline
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 export RAY_DEBUG_MODE=0
-export DATA_DIR='/share/home/sxjiang/myproject/Search-R1-OCT/scripts/data_process/data/nq_search-oct-merf'
+export DATA_DIR='/share/home/sxjiang/myproject/Search-R1-OCT/scripts/data_process/data/nq_search-oct'
 
 WAND_PROJECT="Search-R1-OCT"
 
 export BASE_MODEL='/share/home/sxjiang/model/Qwen2.5-3B'
-export EXPERIMENT_NAME=${data_name}-search-r1-grpo-qwen2.5-3b-em-oct-merf-20250702-300-0.95
+export EXPERIMENT_NAME=${data_name}-search-r1-grpo-qwen2.5-3b-em-oct-hard-20250704-300-0.95
 # export BASE_MODEL='meta-llama/Llama-3.2-3B-Instruct'
 # export EXPERIMENT_NAME=${data_name}-search-r1-grpo-llama3.2-3b-it-em
 # export BASE_MODEL='meta-llama/Llama-3.1-8B'
@@ -42,7 +42,7 @@ PYTHONUNBUFFERED=1 python3 -m verl.trainer.main_ppo \
     data.max_obs_length=500 \
     data.shuffle_train_dataloader=True \
     algorithm.adv_estimator=grpo \
-    algorithm.oct_penalty=times \
+    algorithm.oct_penalty=hard \
     actor_rollout_ref.model.path=$BASE_MODEL \
     actor_rollout_ref.model.enable_gradient_checkpointing=true \
     actor_rollout_ref.model.use_remove_padding=True \

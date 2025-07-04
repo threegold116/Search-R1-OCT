@@ -121,9 +121,16 @@ def apply_kl_penalty(data: DataProto, kl_ctrl: core_algos.AdaptiveKLController, 
 def apply_oct_penalty(data: DataProto, oct_ctrl: core_algos.OctController, oct_penalty='oct'):
     token_level_scores = data.batch['token_level_scores']
     # compute the oct reward cofficent
-    old,avg_call_times = core_algos.oct_penalty(data,tokenizer=oct_ctrl.tokenizer,oct_smooth=oct_ctrl.smooth)  # (batch_size, response_length)
-    print(f"old: {old}")
-    oct_token_level_scores = token_level_scores * old.unsqueeze(-1) *oct_ctrl.cofficient #(bz,response_length)*(bz,1) for last-token score
+    if oct_penalty == 'soft':
+        old,avg_call_times = core_algos.oct_penalty(data,tokenizer=oct_ctrl.tokenizer,oct_smooth=oct_ctrl.smooth)  # (batch_size, response_length)
+        print(f"old: {old}")
+        oct_token_level_scores = token_level_scores * old.unsqueeze(-1) *oct_ctrl.cofficient #(bz,response_length)*(bz,1) for last-token score
+    elif oct_penalty == 'hard':
+        old,avg_call_times = core_algos.oct_penalty_hard(data,tokenizer=oct_ctrl.tokenizer)  # (batch_size, response_length)
+        print(f"old: {old}")
+        oct_token_level_scores = token_level_scores * old.unsqueeze(-1) *oct_ctrl.cofficient #(bz,response_length)*(bz,1) for last-token score
+    else:
+        raise NotImplementedError
     data.batch['token_level_scores'] = oct_token_level_scores
     metrics = {'actor/avg_call_times': avg_call_times,"actor/oct_coff":oct_ctrl.cofficient,"actor/oct":torch.mean(oct_token_level_scores).item()}
     return data, metrics

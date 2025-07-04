@@ -377,3 +377,66 @@ def oct_penalty(data,tokenizer,oct_smooth):
             else:
                 oct_scores[i] = torch.sin(torch.tensor(map_times*torch.pi/(2*optim_time)))
     return oct_scores, calling_times_sum/bsz
+
+
+
+
+def oct_penalty_hard(data,tokenizer):
+    # 1.get_strings
+    calling_times = []
+    metainfo = data.meta_info.get("valid_search_stats",None)
+    for i in range(len(data)):
+        if metainfo is not None:
+            calling_times.append(metainfo[i])
+        else:
+            data_item = data[i]  # DataProtoItem
+
+            prompt_ids = data_item.batch['prompts']
+
+            prompt_length = prompt_ids.shape[-1]
+
+            valid_prompt_length = data_item.batch['attention_mask'][:prompt_length].sum()
+            valid_prompt_ids = prompt_ids[-valid_prompt_length:]
+
+            response_ids = data_item.batch['responses']
+            valid_response_length = data_item.batch['attention_mask'][prompt_length:].sum()
+            valid_response_ids = response_ids[:valid_response_length]
+
+            # decode
+            sequences = torch.cat((valid_prompt_ids, valid_response_ids))
+            sequences_str = tokenizer.decode(sequences)
+
+            calling_times.append(get_calling_times(sequences_str))
+
+    # 2.group_by_index
+    index = data.non_tensor_batch['uid']
+    id2calling_times = defaultdict(list)
+    token_level_scores = data.batch['token_level_scores']
+    id2min_calling_times = {}
+    oct_scores = torch.zeros((data.batch.batch_size[0]), dtype=torch.float32)
+    calling_times_sum = 0
+    with torch.no_grad():
+        bsz = data.batch.batch_size[0]
+        for i in range(bsz):
+            calling_times_sum += calling_times[i]
+            if torch.sum(token_level_scores[i])==1:
+                id2calling_times[index[i]].append(calling_times[i])
+        for idx in id2calling_times:
+            if len(id2calling_times[idx]) == 1:
+                id2min_calling_times[idx] = id2calling_times[idx][0]
+            elif len(id2calling_times[idx]) > 1:
+                id2min_calling_times[idx] = min(id2calling_times[idx])
+            else:
+                raise ValueError(f"no calling times in prompt index: {idx}")
+        for i in range(bsz): # 4. compute oct_scores
+            if index[i] not in id2calling_times:
+                optim_time = -1
+            else:
+                optim_time = id2min_calling_times[index[i]] #n
+            calling_time = calling_times[i] #m
+            answer_reward = torch.sum(token_level_scores[i])
+            if answer_reward==1 and optim_time==calling_time:
+                oct_scores[i] = torch.tensor(2) #TODO：先以乘法的方法实现
+            else:
+                oct_scores[i] = torch.tensor(1) #不改变原来answer_reward的值
+    return oct_scores, calling_times_sum/bsz
