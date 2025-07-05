@@ -39,15 +39,18 @@ You must conduct reasoning inside <think> and </think> first every time you get 
 After reasoning, if you find you lack some knowledge, you can call a search engine by <search> query </search> and it will return the top searched results between <information> and </information>. \
 You need to make every search call count and gain helpful results. \
 If you find no further external knowledge needed, you can directly provide the answer inside <answer> and </answer>, without detailed illustrations. For example, <answer> Beijing </answer>. Question: {question}\n"""
+        no_search_prefix = f"""Answer the given question. \
+You must conduct reasoning inside <think> and </think> first every time. \
+After reasoning, you can directly provide the answer inside <answer> and </answer>, without detailed illustrations. For example, <answer> Beijing </answer>. Question: {question}\n"""
 
     else:
         raise NotImplementedError
-    return oct_prefix
+    return no_search_prefix
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--local_dir', default='/home/sxjiang/myproject/agent/Search-R1-OCT/scripts/data_process/data/nq_search-oct')
+    parser.add_argument('--local_dir', default='/share/home/sxjiang/myproject/Search-R1-OCT/scripts/data_process/data/nq_search-no-search')
     parser.add_argument('--hdfs_dir', default=None)
     parser.add_argument('--template_type', type=str, default='base')
     parser.add_argument('--data_sources', default='nq,triviaqa,popqa,hotpotqa,2wikimultihopqa,musique,bamboogle')
@@ -60,7 +63,7 @@ if __name__ == '__main__':
     for data_source in data_sources:
 
         if data_source != 'strategyqa':
-            dataset = datasets.load_dataset('/home/sxjiang/dataset/FlashRAG_datasets', data_source)
+            dataset = datasets.load_dataset('/share/home/sxjiang/dataset/rag/FlashRAG_datasets', data_source)
         else:
             dataset = datasets.load_dataset('json', data_files="/home/peterjin/mnt/data/strategyqa/test_correct.jsonl")
 

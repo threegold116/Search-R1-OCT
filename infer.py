@@ -7,7 +7,7 @@ import requests
 question = "Mike Barnett negotiated many contracts including which player that went on to become general manager of CSKA Moscow of the Kontinental Hockey League?"
 
 # Model ID and device setup
-model_id = "/share/home/jfliang/Project/sxjiang/Search-R1-OCT/transfer_checkpoints/SearchR1-nq_hotpotqa_train-qwen2.5-3b-em-grpo-oct-merf-300-140-250702"
+model_id = "/share/home/sxjiang/myproject/Search-R1-OCT/transfer_checkpoints/SearchR1-nq_hotpotqa_train-qwen2.5-3b-em-grpo-oct-hard-300-0.95-250-250703"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 question = question.strip()
@@ -20,7 +20,7 @@ curr_search_template = '\n\n{output_text}<information>{search_results}</informat
 prompt = f"""Answer the given question. \
 You must conduct reasoning inside <think> and </think> first every time you get new information. \
 After reasoning, if you find you lack some knowledge, you can call a search engine by <search> query </search> and it will return the top searched results between <information> and </information>. \
-You can search as many times as your want. \
+You need to make every search call count and gain helpful results. \
 If you find no further external knowledge needed, you can directly provide the answer inside <answer> and </answer>, without detailed illustrations. For example, <answer> Beijing </answer>. Question: {question}\n"""
 
 oct_prompt = f"""
@@ -105,7 +105,7 @@ while True:
         max_new_tokens=1024,
         stopping_criteria=stopping_criteria,
         pad_token_id=tokenizer.eos_token_id,
-        do_sample=True,
+        do_sample=False,
         temperature=0.7
     )
 

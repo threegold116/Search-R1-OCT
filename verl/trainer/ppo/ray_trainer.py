@@ -523,6 +523,8 @@ class RayPPOTrainer(object):
 
                 reward_tensor_lst.append(reward_tensor)
                 data_source_lst.append(test_batch.non_tensor_batch.get('data_source', ['unknown'] * reward_tensor.shape[0]))
+                if os.environ.get("RAY_DEBUG_MODE",0)=='1':
+                    break
         else:
             for batch_dict in self.val_dataloader:
                 timing_raw = {}
@@ -571,21 +573,25 @@ class RayPPOTrainer(object):
                 data_source_reward[data_source] = []
             data_source_reward[data_source].append(reward_tensor[i].item())
 
-        # evaluate calling_times based on data source
-        calling_times = np.concatenate(calling_times_lst, axis=0)
-        data_source_calling_times = {}
-        for i in range(reward_tensor.shape[0]):
-            data_source = data_sources[i]
-            if data_source not in data_source_calling_times:
-                data_source_calling_times[data_source] = []
-            data_source_calling_times[data_source].append(calling_times[i])
+        
+        if self.config.do_search:
+            # evaluate calling_times based on data source
+            calling_times = np.concatenate(calling_times_lst, axis=0)
+            data_source_calling_times = {}
+            for i in range(reward_tensor.shape[0]):
+                data_source = data_sources[i]
+                if data_source not in data_source_calling_times:
+                    data_source_calling_times[data_source] = []
+                data_source_calling_times[data_source].append(calling_times[i])
         metric_dict = {}
         for data_source, rewards in data_source_reward.items():
             metric_dict[f'val/test_score/{data_source}'] = np.mean(rewards)
-        for data_source, calling_times in data_source_calling_times.items():
-            rewards = data_source_reward[data_source]
-            metric_dict[f'val/calling_times/{data_source}'] = np.mean(calling_times)
-            metric_dict[f'val/calling_times_productivity/{data_source}'] = np.sum(rewards)/np.sum(calling_times)
+        
+        if self.config.do_search:
+            for data_source, calling_times in data_source_calling_times.items():
+                rewards = data_source_reward[data_source]
+                metric_dict[f'val/calling_times/{data_source}'] = np.mean(calling_times)
+                metric_dict[f'val/calling_times_productivity/{data_source}'] = np.sum(rewards)/np.sum(calling_times)
         return metric_dict
 
 

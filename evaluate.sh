@@ -2,11 +2,11 @@ data_name=nq_hotpotqa_train
 
 export WANDB_MODE=offline
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-export RAY_DEBUG_MODE=0
-export DATA_DIR=/share/home/sxjiang/myproject/Search-R1-OCT/scripts/data_process/data/nq_search-oct # first download the data from https://huggingface.co/datasets/PeterJinGo/nq_hotpotqa_train
+export RAY_DEBUG_MODE=1
+export DATA_DIR=/share/home/sxjiang/myproject/Search-R1-OCT/scripts/data_process/data/nq_search-no-search # first download the data from https://huggingface.co/datasets/PeterJinGo/nq_hotpotqa_train
 
-export BASE_MODEL="/share/home/sxjiang/myproject/Search-R1-OCT/transfer_checkpoints/SearchR1-nq_hotpotqa_train-qwen2.5-3b-em-grpo-oct-100-0.95-250703"
-export EXPERIMENT_NAME=SearchR1-nq_train-qwen2.5-3b-em-grpo-oct-100-0.95-250704
+export BASE_MODEL="/share/home/sxjiang/myproject/Search-R1-OCT/transfer_checkpoints/SearchR1-nq_hotpotqa_train-qwen2.5-3b-em-grpo-oct-hard-300-0.95-250-250704"
+export EXPERIMENT_NAME=SearchR1-nq_train-qwen2.5-3b-em-grpo-oct-hard-300-0.95-250-250705-no-search
 # set -x
 export VLLM_ATTENTION_BACKEND=XFORMERS # vllm + qwen2-7b with flash_attn has some issues
 
@@ -63,6 +63,7 @@ PYTHONUNBUFFERED=1 python3 -m verl.trainer.main_ppo \
     trainer.n_gpus_per_node=8 \
     trainer.nnodes=1 \
     max_turns=4 \
+    do_search=false\
     retriever.url="http://127.0.0.1:8000/retrieve" \
     retriever.topk=3 \
     2>&1 | tee $EXPERIMENT_NAME.log
